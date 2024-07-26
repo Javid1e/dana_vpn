@@ -32,8 +32,8 @@ async def buy(update: Update, context) -> None:
 
 
 async def support(update: Update, context) -> None:
-    await update.message.reply_text('لطفاً سوال یا مشکل خود را ارسال کنید و تیم پشتیبانی ما به زودی با شما تماس خواهد '
-                                    'گرفت.')
+    await update.message.reply_text(
+        'لطفاً سوال یا مشکل خود را ارسال کنید و تیم پشتیبانی ما به زودی با شما تماس خواهد گرفت.')
 
 
 async def about_us(update: Update, context) -> None:
