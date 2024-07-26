@@ -3,6 +3,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKe
 from telegram.ext import CommandHandler, MessageHandler, filters, CallbackQueryHandler, ApplicationBuilder
 import os
 from dotenv import load_dotenv
+import asyncio
 
 load_dotenv()  # بارگذاری متغیرهای محیطی از فایل .env
 
@@ -11,7 +12,6 @@ app = Flask(__name__)
 TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 application = ApplicationBuilder().token(TOKEN).build()
 
-
 async def start(update: Update, context) -> None:
     keyboard = [
         [KeyboardButton('📦 خرید وی‌پی‌ان'), KeyboardButton('💬 پشتیبانی')],
@@ -19,7 +19,6 @@ async def start(update: Update, context) -> None:
     ]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     await update.message.reply_text('به ربات خوش آمدید! از منوی زیر استفاده کنید:', reply_markup=reply_markup)
-
 
 async def buy(update: Update, context) -> None:
     keyboard = [
@@ -30,16 +29,11 @@ async def buy(update: Update, context) -> None:
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text('لطفاً یکی از پلن‌ها را انتخاب کنید:', reply_markup=reply_markup)
 
-
 async def support(update: Update, context) -> None:
-    await update.message.reply_text(
-        'لطفاً سوال یا مشکل خود را ارسال کنید و تیم پشتیبانی ما به زودی با شما تماس خواهد گرفت.')
-
+    await update.message.reply_text('لطفاً سوال یا مشکل خود را ارسال کنید و تیم پشتیبانی ما به زودی با شما تماس خواهد گرفت.')
 
 async def about_us(update: Update, context) -> None:
-    await update.message.reply_text(
-        'ما ارائه دهنده بهترین خدمات وی‌پی‌ان با کیفیت بالا هستیم. برای اطلاعات بیشتر به وبسایت ما مراجعه کنید.')
-
+    await update.message.reply_text('ما ارائه دهنده بهترین خدمات وی‌پی‌ان با کیفیت بالا هستیم. برای اطلاعات بیشتر به وبسایت ما مراجعه کنید.')
 
 async def settings(update: Update, context) -> None:
     keyboard = [
@@ -48,7 +42,6 @@ async def settings(update: Update, context) -> None:
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text('لطفاً یکی از گزینه‌های زیر را انتخاب کنید:', reply_markup=reply_markup)
-
 
 async def button(update: Update, context) -> None:
     query = update.callback_query
@@ -64,14 +57,16 @@ async def button(update: Update, context) -> None:
     elif query.data == 'manage_subscriptions':
         await query.edit_message_text(text="مدیریت اشتراک‌ها در حال حاضر در دسترس نیست.")
 
-
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    data = request.get_json(force=True)
-    update = Update.de_json(data, application.bot)
-    application.update_queue.put(update)
-    return 'ok'
-
+    try:
+        data = request.get_json(force=True)
+        update = Update.de_json(data, application.bot)
+        asyncio.run(application.update_queue.put(update))
+        return 'ok'
+    except Exception as e:
+        app.logger.error(f"Error processing webhook: {e}")
+        return 'Internal Server Error', 500
 
 if __name__ == '__main__':
     application.add_handler(CommandHandler("start", start))
